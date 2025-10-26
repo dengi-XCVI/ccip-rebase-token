@@ -74,7 +74,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         return super.balanceOf(_user);
     }
 
-    /**/
+    /**
     * @notice Mints tokens to the user when they deposit into the vault
     * @dev Before minting, we need to mint any accrued interest to the user
     * @param _to The address to mint tokens to
@@ -170,7 +170,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     /**
      * @notice Calculates the accumulated interest since last update for that user
      * @param _user The user to calculate interest for
-     * @return uint256 The accumulated interest since last update for that user
+     * @return linearInterest The accumulated interest since last update for that user
      */
     function _calculateUserAccumulatedInterestSinceLastUpdate(address _user) internal view returns (uint256 linearInterest) {
         // this is going to be inear growth with time
@@ -187,7 +187,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
 
     /**
      * @notice Gets the interest rate for that user
-     * @param _user 
+     * @param _user The user to get the interest rate for
      * @return uint256 The interest rate of the user
      */
     function getUserInterestRate(address _user) external view returns (uint256) {
