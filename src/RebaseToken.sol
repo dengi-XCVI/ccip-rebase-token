@@ -39,15 +39,14 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
 
     mapping(address => uint256) private s_userInterestRates;
     mapping(address => uint256) private s_userLastUpdatedTimestamps;
-    
+
     uint256 private constant PRECISION_FACTOR = 1e18;
     uint256 private s_interestRate = (5 * PRECISION_FACTOR) / 1e8; // 0.00000005 tokens per second
     bytes32 private constant MINT_AND_BURN_ROLE = keccak256("MINT_AND_BURN_ROLE");
 
     event InterestRateUpdated(uint256 newInterestRate);
 
-    constructor() ERC20("Rebase Token", "RBT") Ownable(msg.sender) {
-    }
+    constructor() ERC20("Rebase Token", "RBT") Ownable(msg.sender) {}
 
     function grantMintAndBurnRole(address _account) external onlyOwner {
         _grantRole(MINT_AND_BURN_ROLE, _account);
@@ -59,7 +58,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
      * @param _newInterestRate The new interest rate
      */
     function setInterestRate(uint256 _newInterestRate) external onlyOwner {
-        if(_newInterestRate >= s_interestRate) {
+        if (_newInterestRate >= s_interestRate) {
             revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate, _newInterestRate);
         }
         s_interestRate = _newInterestRate;
@@ -76,14 +75,14 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     }
 
     /**
-    * @notice Mints tokens to the user when they deposit into the vault
-    * @dev Before minting, we need to mint any accrued interest to the user
-    * @param _to The address to mint tokens to
-    * @param _amount The amount of tokens to mint    
+     * @notice Mints tokens to the user when they deposit into the vault
+     * @dev Before minting, we need to mint any accrued interest to the user
+     * @param _to The address to mint tokens to
+     * @param _amount The amount of tokens to mint
      */
-    function mint(address _to, uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE) {
+    function mint(address _to, uint256 _amount,uint256 _userInterestRate) external onlyRole(MINT_AND_BURN_ROLE) {
         _mintAccruedInterest(_to);
-        s_userInterestRates[_to] = s_interestRate;
+        s_userInterestRates[_to] = _userInterestRate;
         _mint(_to, _amount); // Inherited from OpenZeppelin ERC20
     }
 
@@ -91,11 +90,11 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
      * @notice Burns tokens from the user when they withdraw from the vault
      * @dev Before burning, we need to mint any accrued interest to the user
      * @param _from The address to burn tokens from
-     * @param _amount The amount of tokens to burn    
+     * @param _amount The amount of tokens to burn
      */
     function burn(address _from, uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE) {
         // Dealing with dust
-        if(_amount == type(uint256).max) {
+        if (_amount == type(uint256).max) {
             _amount = balanceOf(_from);
         }
         _mintAccruedInterest(_from);
@@ -127,6 +126,8 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         // Get the current principal balance => tokens that have actually been minted to the user
         // multiply the balance by the interest that has been accumulated since last update
         return (super.balanceOf(_user) * _calculateUserAccumulatedInterestSinceLastUpdate(_user)) / 1e18;
+        // the result is compounding interest,because of balance updating on every action,
+        // but since the interest rate is very low and time periods are short, it behaves almost linearly
     }
 
     /**
@@ -139,11 +140,12 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     function transfer(address _recipient, uint256 _amount) public override returns (bool) {
         _mintAccruedInterest(msg.sender);
         _mintAccruedInterest(_recipient);
-        if(_amount == type(uint256).max) {
+        if (_amount == type(uint256).max) {
             _amount = balanceOf(msg.sender);
         }
-        if(balanceOf(_recipient) == 0) {
+        if (balanceOf(_recipient) == 0) {
             s_userInterestRates[_recipient] = s_interestRate;
+            // The way of setting the recipient interest rate might be an issue, depends on chosen design
         }
         return super.transfer(_recipient, _amount);
     }
@@ -159,10 +161,10 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     function transferFrom(address _sender, address _recipient, uint256 _amount) public override returns (bool) {
         _mintAccruedInterest(_sender);
         _mintAccruedInterest(_recipient);
-        if(_amount == type(uint256).max) {
+        if (_amount == type(uint256).max) {
             _amount = balanceOf(_sender);
         }
-        if(balanceOf(_recipient) == 0) {
+        if (balanceOf(_recipient) == 0) {
             s_userInterestRates[_recipient] = s_interestRate;
         }
         return super.transferFrom(_sender, _recipient, _amount);
@@ -173,7 +175,11 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
      * @param _user The user to calculate interest for
      * @return linearInterest The accumulated interest since last update for that user
      */
-    function _calculateUserAccumulatedInterestSinceLastUpdate(address _user) internal view returns (uint256 linearInterest) {
+    function _calculateUserAccumulatedInterestSinceLastUpdate(address _user)
+        internal
+        view
+        returns (uint256 linearInterest)
+    {
         // this is going to be inear growth with time
         // (principal amount) + (principal amount * interest rate * time elapsed)
         // deposit: 10 tokens
@@ -183,7 +189,6 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         uint256 timeElapsed = block.timestamp - s_userLastUpdatedTimestamps[_user];
         uint256 userInterestRate = s_userInterestRates[_user];
         return linearInterest = PRECISION_FACTOR + (userInterestRate * timeElapsed);
-
     }
 
     /**
@@ -202,5 +207,4 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     function getInterestRate() external view returns (uint256) {
         return s_interestRate;
     }
-
 }
