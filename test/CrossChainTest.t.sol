@@ -231,5 +231,18 @@ contract CrossChainTest is Test {
             sepoliaToken,
             arbSepoliaToken
         );
+
+        // bridege tokens back
+        vm.selectFork(arbSepoliaFork);
+        vm.warp(block.timestamp + 15 minutes);
+        bridgeTokens(
+            SEND_VALUE,
+            arbSepoliaFork,
+            ethSepoliaFork,
+            arbSepoliaNetworkDetails,
+            sepoliaNetworkDetails,
+            arbSepoliaToken,
+            sepoliaToken
+        );
     }
 }
