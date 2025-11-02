@@ -8,8 +8,8 @@ import {Pool} from "@ccip/src/v0.8/ccip/libraries/Pool.sol";
 import {IRebaseToken} from "./interfaces/IRebaseToken.sol";
 
 contract RebaseTokenPool is TokenPool {
-    constructor(IERC20 _token, address[] memory _allowList, address _rnmProxy, address _router)
-        TokenPool(_token, 18, _allowList, _rnmProxy, _router)
+    constructor(IERC20 _token, address[] memory _allowList, address _rmnProxy, address _router)
+        TokenPool(_token, 18, _allowList, _rmnProxy, _router)
     {}
 
     function lockOrBurn(Pool.LockOrBurnInV1 calldata lockOrBurnIn)
@@ -32,7 +32,7 @@ contract RebaseTokenPool is TokenPool {
         _validateReleaseOrMint(releaseOrMintIn);
         uint256 userInterestRate = abi.decode(releaseOrMintIn.sourcePoolData, (uint256));
         IRebaseToken(address(i_token)).mint(releaseOrMintIn.receiver, releaseOrMintIn.amount, userInterestRate);
-      
+
         return Pool.ReleaseOrMintOutV1({destinationAmount: releaseOrMintIn.amount});
     }
 }
