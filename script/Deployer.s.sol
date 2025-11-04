@@ -6,8 +6,7 @@ import {RebaseToken} from "../src/RebaseToken.sol";
 import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
 import {Vault} from "../src/Vault.sol";
 import {Script, console} from "forge-std/Script.sol";
-import {CCIPLocalSimulatorFork, Register} from
-    "lib/chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
+import {CCIPLocalSimulatorFork, Register} from "lib/chainlink-local/src/ccip/CCIPLocalSimulatorFork.sol";
 import {IERC20} from "lib/ccip/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 import {RegistryModuleOwnerCustom} from
     "lib/ccip/contracts/src/v0.8/ccip/tokenAdminRegistry/RegistryModuleOwnerCustom.sol";
@@ -23,26 +22,19 @@ contract TokenAndPoolDeployer is Script {
             IERC20(address(token)),
             new address[](0),
             networkDetails.rmnProxyAddress, // RMN Proxy Sepolia
-            networkDetails.routerAddress  // Router Sepolia
+            networkDetails.routerAddress // Router Sepolia
         );
         token.grantMintAndBurnRole(address(pool));
-        RegistryModuleOwnerCustom(networkDetails.registryModuleOwnerCustomAddress).registerAdminViaOwner(
-            address(token)
-        );
-        TokenAdminRegistry(networkDetails.tokenAdminRegistryAddress).acceptAdminRole(
-            address(token)
-        );
-        TokenAdminRegistry(networkDetails.tokenAdminRegistryAddress).setPool(
-            address(token),
-            address(pool)
-        );
+        RegistryModuleOwnerCustom(networkDetails.registryModuleOwnerCustomAddress).registerAdminViaOwner(address(token));
+        TokenAdminRegistry(networkDetails.tokenAdminRegistryAddress).acceptAdminRole(address(token));
+        TokenAdminRegistry(networkDetails.tokenAdminRegistryAddress).setPool(address(token), address(pool));
 
         vm.stopBroadcast();
     }
 }
 
 contract VaultDeployer is Script {
-    function run(address _rebaseToken) public returns (Vault vault){
+    function run(address _rebaseToken) public returns (Vault vault) {
         vm.startBroadcast();
         address owner = msg.sender;
 

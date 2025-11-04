@@ -11,6 +11,7 @@ remappings = [
 
 rpc_endpoints = {  eth-sepolia = "https://eth-sepolia.g.alchemy.com/v2/Ws5pN_IX5FrMBQL54kYyR", arb-sepolia = "https://arb-sepolia.g.alchemy.com/v2/Ws5pN_IX5FrMBQL54kYyR"}
 
+via_ir = true
 
 [fuzz]
 runs = 128
